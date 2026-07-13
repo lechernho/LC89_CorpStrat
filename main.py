@@ -34,3 +34,9 @@ async def api_notes():
         )
         resp.raise_for_status()
         return JSONResponse(resp.json())
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
