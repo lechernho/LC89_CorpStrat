@@ -26,7 +26,7 @@ async def index():
 @app.get("/api/notes")
 async def api_notes():
     resource_key = os.environ["IDDB_RESOURCE_KEY"]
-    async with httpx.AsyncClient(timeout=30) as client:
+    async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
         resp = await client.get(
             f"{os.environ['IDDB_API_URL']}/rest/v1/notes",
             headers={"apikey": resource_key, "Authorization": f"Bearer {resource_key}"},
