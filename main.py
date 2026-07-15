@@ -26,13 +26,18 @@ async def index():
 @app.get("/api/notes")
 async def api_notes():
     resource_key = os.environ["IDDB_RESOURCE_KEY"]
-    async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
+    base_url = f"https://{os.environ['IDDB_TENANT']}.platform.atko.ai"
+    async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.get(
-            f"{os.environ['IDDB_API_URL']}/rest/v1/notes",
+            f"{base_url}/rest/v1/notes",
             headers={"apikey": resource_key, "Authorization": f"Bearer {resource_key}"},
             params={"select": "*", "order": "date.desc"},
         )
-        resp.raise_for_status()
+        if resp.status_code >= 400:
+            return JSONResponse(
+                {"error": "upstream_error", "status": resp.status_code, "body": resp.text[:1000]},
+                status_code=502,
+            )
         return JSONResponse(resp.json())
 
 
