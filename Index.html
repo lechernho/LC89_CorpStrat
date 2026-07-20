@@ -873,7 +873,23 @@
       return d === 1 && mo === 1 ? `${y}` : d === 1 ? `${MONTHS[mo-1]} ${y}` : `${MONTHS[mo-1]} ${d}, ${y}`;
     }
 
-    let allNotes = await (await fetch('/api/notes')).json();
+    let allNotes;
+    try {
+      const notesRes = await fetch('/api/notes');
+      const notesData = await notesRes.json();
+      if (!notesRes.ok || !Array.isArray(notesData)) {
+        throw new Error(`HTTP ${notesRes.status} - ${JSON.stringify(notesData).slice(0, 500)}`);
+      }
+      allNotes = notesData;
+    } catch (err) {
+      console.error('Failed to load /api/notes:', err);
+      document.body.innerHTML = `<div style="font-family:sans-serif;max-width:600px;margin:80px auto;padding:24px;border:1px solid #c33;border-radius:8px;color:#c33;">
+        <h2>Failed to load notes</h2>
+        <p>${String(err && err.message || err).replace(/</g, '&lt;')}</p>
+        <p style="color:#666;font-size:0.9em;">Check browser console / Network tab (/api/notes) for details.</p>
+      </div>`;
+      return;
+    }
     allNotes.sort((a, b) => parseDate(b.date) - parseDate(a.date));
     let activeCats = new Set();
     let activeTag = null;
