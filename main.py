@@ -26,7 +26,7 @@ async def index():
 @app.get("/api/notes")
 async def api_notes():
     resource_key = os.environ["IDDB_RESOURCE_KEY"]
-    base_url = f"https://{os.environ['IDDB_TENANT']}.platform.atko.ai"
+    base_url = f"https://api.platform.atko.ai/{os.environ['IDDB_TENANT']}"
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.get(
             f"{base_url}/rest/v1/notes",
