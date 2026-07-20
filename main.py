@@ -41,6 +41,32 @@ async def api_notes():
         return JSONResponse(resp.json())
 
 
+@app.get("/api/debug-egress")
+async def debug_egress():
+    """Temporary diagnostic route - isolates proxy-env misconfiguration from
+    platform-level egress blocking. Remove once the ConnectTimeout issue is resolved."""
+    proxy_vars = {
+        k: bool(os.environ.get(k))
+        for k in ["HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY",
+                  "http_proxy", "https_proxy", "all_proxy", "no_proxy"]
+    }
+
+    async def try_connect(url, trust_env):
+        try:
+            async with httpx.AsyncClient(timeout=8, trust_env=trust_env) as client:
+                resp = await client.get(url)
+                return {"ok": True, "status": resp.status_code}
+        except Exception as e:
+            return {"ok": False, "error": f"{type(e).__name__}: {e}"}
+
+    return JSONResponse({
+        "proxy_env_vars_set": proxy_vars,
+        "unrelated_host_default": await try_connect("https://1.1.1.1", True),
+        "unrelated_host_no_proxy_env": await try_connect("https://1.1.1.1", False),
+        "platform_host_no_proxy_env": await try_connect("https://api.platform.atko.ai/", False),
+    })
+
+
 if __name__ == "__main__":
     import uvicorn
 
